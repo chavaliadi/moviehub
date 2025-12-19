@@ -43,14 +43,30 @@ class MovieRecommendationSystem:
         else:
             return os.path.join(base_path, "movies.csv")
 
-    def load_data(self):
-        """Load and preprocess the movie data"""
+    def load_data(self, limit=None):
+        """
+        Load and preprocess the movie data
+        
+        Args:
+            limit: Maximum number of rows to load (dataset subset)
+        """
         print("📥 Loading movie data...")
+        if limit:
+            print(f"⚠️ Limit set to {limit} rows")
 
         try:
-            # Load the dataset
-            self.movies_data = pd.read_csv(self.dataset_path)
+            # Load the dataset with optional limit
+            if limit:
+                self.movies_data = pd.read_csv(self.dataset_path, nrows=limit)
+            else:
+                self.movies_data = pd.read_csv(self.dataset_path)
+            
             print(f"✅ Loaded {len(self.movies_data):,} movies")
+            
+            # Verify we didn't just load the LFS pointer
+            if len(self.movies_data) < 10:
+                print("⚠️ Warning: Dataset seems suspiciously small. Checking content...")
+                print(self.movies_data.head())
 
             # Clean and prepare data based on dataset type
             if self.use_large_dataset and 'tmbd.csv' in self.dataset_path:
@@ -152,20 +168,24 @@ class MovieRecommendationSystem:
             print("🎯 Creating optimized weighted features...")
 
             # Create weighted features using vectorized operations (no Python loops)
-            # High weight: genres (2x) + keywords (2x) + overview + language
+            # High weight: genres (4x) + keywords (2x) + overview + language
             def _safe_fill(col):
                 if col in self.movies_data:
                     return self.movies_data[col].fillna('').astype(str)
                 return pd.Series([''] * len(self.movies_data))
 
             genres_s = _safe_fill('genres')
+            # Replace commas with spaces for TF-IDF to handle tokens like "Science Fiction" as simplified tokens or n-grams if configured
+            # But better to keep them as text. "Science Fiction" -> "Science", "Fiction" works for similarity.
+            # We just explicitly weight it higher.
+            
             keywords_s = _safe_fill('keywords')
             overview_s = _safe_fill('overview')
             lang_s = _safe_fill('original_language')
 
-            # build combined series efficiently
+            # build combined series efficiently - Increase genre weight to 4x
             combined_features = (
-                genres_s + ' ' + genres_s + ' ' +
+                genres_s + ' ' + genres_s + ' ' + genres_s + ' ' + genres_s + ' ' +
                 keywords_s + ' ' + keywords_s + ' ' +
                 overview_s + ' ' + lang_s
             )
@@ -173,12 +193,12 @@ class MovieRecommendationSystem:
             # Vectorize features with optimized parameters
             print("⚡ Creating optimized TF-IDF vectors...")
             self.vectorizer = TfidfVectorizer(
-                max_features=2000,        # Reduced for speed
+                max_features=5000,        # Increased from 2000 for better nuance
                 stop_words='english',
-                ngram_range=(1, 1),       # Only unigrams for speed
-                min_df=5,                 # Higher threshold for speed
-                max_df=0.8,
-                dtype=np.float32,         # Use float32 instead of float64 for memory
+                ngram_range=(1, 2),       # Use bigrams to capture "Science Fiction" as a unit
+                min_df=2,                 # Lower threshold
+                max_df=0.9,
+                dtype=np.float32,
                 norm='l2'
             )
 
@@ -198,7 +218,7 @@ class MovieRecommendationSystem:
     def get_recommendations(self, movie_name, num_recommendations=10):
         """
         Get movie recommendations
-
+        
         Args:
                 movie_name: Name of the movie
                 num_recommendations: Number of recommendations to return
@@ -242,53 +262,38 @@ class MovieRecommendationSystem:
 
             def _build_features(r):
                 # Match the exact approach used in training (optimized weighting)
-                # High weight: genres (2x) + keywords (2x) + overview + language
-                genres = r.get('genres', '') if isinstance(
-                    r, dict) else r.get('genres', '')
-                keywords = r.get('keywords', '') if isinstance(
-                    r, dict) else r.get('keywords', '')
-                overview = r.get('overview', '') if isinstance(
-                    r, dict) else r.get('overview', '')
-                language = r.get('original_language', '') if isinstance(
-                    r, dict) else r.get('original_language', '')
+                # High weight: genres (4x) + keywords (2x) + overview + language
+                genres = r.get('genres', '') if isinstance(r, dict) else r.get('genres', '')
+                keywords = r.get('keywords', '') if isinstance(r, dict) else r.get('keywords', '')
+                overview = r.get('overview', '') if isinstance(r, dict) else r.get('overview', '')
+                language = r.get('original_language', '') if isinstance(r, dict) else r.get('original_language', '')
 
                 # Handle NaN values
-                if pd.isna(genres):
-                    genres = ''
-                if pd.isna(keywords):
-                    keywords = ''
-                if pd.isna(overview):
-                    overview = ''
-                if pd.isna(language):
-                    language = ''
+                if pd.isna(genres): genres = ''
+                if pd.isna(keywords): keywords = ''
+                if pd.isna(overview): overview = ''
+                if pd.isna(language): language = ''
 
                 # Apply same weighting as in training
-                return f"{genres} {genres} {keywords} {keywords} {overview} {language}"
+                return f"{genres} {genres} {genres} {genres} {keywords} {keywords} {overview} {language}"
 
             combined = _build_features(row.iloc[0])
             input_vec = self.vectorizer.transform([combined])
 
-            # Compute similarity scores efficiently using sparse dot (feature_matrix is CSR)
-            # Since TF-IDF vectors were L2-normalized (norm='l2'), dot product equals cosine similarity
+            # Compute similarity scores efficiently
             try:
                 sim_row = (self.feature_matrix @ input_vec.T).toarray().ravel()
             except Exception:
-                # fallback to dense cosine if sparse multiplication fails
-                sim_row = cosine_similarity(
-                    input_vec, self.feature_matrix).ravel()
+                sim_row = cosine_similarity(input_vec, self.feature_matrix).ravel()
 
-            # Use argpartition to get top candidates without fully sorting the whole array
-            num_candidates = max(num_recommendations * 3,
-                                 num_recommendations + 10)
+            # Use argpartition to get top candidates
+            num_candidates = max(num_recommendations * 3, num_recommendations + 10)
             if num_candidates < len(sim_row):
-                top_idx = np.argpartition(
-                    sim_row, -num_candidates)[-num_candidates:]
+                top_idx = np.argpartition(sim_row, -num_candidates)[-num_candidates:]
                 top_scores = sim_row[top_idx]
-                # sort the top candidates
                 order = np.argsort(top_scores)[::-1]
                 sorted_indices = top_idx[order]
             else:
-                # small arrays — sort directly
                 sorted_indices = np.argsort(sim_row)[::-1]
 
             # Get recommendations with enhanced scoring
@@ -297,7 +302,15 @@ class MovieRecommendationSystem:
 
             # Get source movie details for genre-based enhancement
             source_row = row.iloc[0]
-            source_genres = set(str(source_row.get('genres', '')).split())
+            # Improved genre parsing: handle comma separation
+            source_genres_str = str(source_row.get('genres', ''))
+            source_genres = set(g.strip() for g in source_genres_str.replace(',', ' ').split() if g.strip()) # Split by space is safer if commas are inconsistent, but comma split is precise
+            # Actually, screenshot shows "Action, Science Fiction". Comma separated.
+            # But the dataset might be mixed. Let's try to split by comma first.
+            if ',' in source_genres_str:
+                source_genres = set(g.strip() for g in source_genres_str.split(',') if g.strip())
+            else:
+                source_genres = set(g.strip() for g in source_genres_str.split() if g.strip())
 
             # Build top candidate list (index, score) from sorted indices
             top_candidates = []
@@ -312,15 +325,19 @@ class MovieRecommendationSystem:
                 if title == matched_title or title in seen_titles:
                     continue
 
-                # Apply genre overlap boost (same as notebook)
-                candidate_genres = set(
-                    str(candidate_row.get('genres', '')).split())
-                genre_overlap = len(
-                    source_genres.intersection(candidate_genres))
+                # Apply genre overlap boost
+                cand_genres_str = str(candidate_row.get('genres', ''))
+                if ',' in cand_genres_str:
+                    candidate_genres = set(g.strip() for g in cand_genres_str.split(',') if g.strip())
+                else:
+                    candidate_genres = set(g.strip() for g in cand_genres_str.split() if g.strip())
+                
+                genre_overlap = len(source_genres.intersection(candidate_genres))
 
                 # Boost score if there's good genre overlap
+                # Higher boost for "Same Genre" preference
                 if genre_overlap > 0:
-                    similarity_score_val += genre_overlap * 0.1
+                    similarity_score_val += genre_overlap * 0.15
 
                 recommendations.append({
                     'title': title,
@@ -397,13 +414,14 @@ class MovieRecommendationSystem:
 # Quick setup function for your API integration
 
 
-def setup_recommendation_system(use_large_dataset=True, sample_size=50000):
+def setup_recommendation_system(use_large_dataset=True, sample_size=50000, load_limit=None):
     """
     Quick setup function for production use
-
+    
     Args:
             use_large_dataset: Use large TMDB dataset (True) or small dataset (False)
             sample_size: Sample size for training (None for full dataset)
+            load_limit: Limit rows loaded from CSV (None for full file)
     """
     print("🚀 Setting up Movie Recommendation System for Production...")
 
@@ -411,7 +429,7 @@ def setup_recommendation_system(use_large_dataset=True, sample_size=50000):
     system = MovieRecommendationSystem(use_large_dataset=use_large_dataset)
 
     # Load data
-    if not system.load_data():
+    if not system.load_data(limit=load_limit):
         return None
 
     # Train model
@@ -426,8 +444,9 @@ def setup_recommendation_system(use_large_dataset=True, sample_size=50000):
 if __name__ == "__main__":
     # Quick test with small sample for demo
     print("🧪 Testing with small sample...")
+    # Use load_limit to avoid reading the whole file if debugging
     system = setup_recommendation_system(
-        use_large_dataset=True, sample_size=10000)
+        use_large_dataset=True, load_limit=20000, sample_size=10000)
 
     if system:
         # Test recommendations

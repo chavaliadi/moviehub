@@ -42,14 +42,20 @@ class RecommendationService:
             self.recommendation_system = MovieRecommendationSystem(
                 use_large_dataset=use_large)
 
-            if self.recommendation_system.load_data():
+            # Use env-configurable limit, default to 50000 to respect "dont load 1.3 m"
+            # This balances performance with recommendation quality.
+            limit_env = os.environ.get('ML_LOAD_LIMIT', '50000')
+            load_limit = int(limit_env) if limit_env and limit_env.isdigit() else 50000
+
+            if self.recommendation_system.load_data(limit=load_limit):
                 # Use env-configurable sample size (None = full dataset for accuracy)
                 sample = os.environ.get('ML_SAMPLE_SIZE')
-                sample_size = int(sample) if sample and sample.isdigit() else None  # Use full dataset
+                sample_size = int(sample) if sample and sample.isdigit() else None
+                
                 if self.recommendation_system.train_model(sample_size=sample_size):
                     self.model_loaded = True
                     self.system_initialized = True
-                    print("✅ ML System initialized successfully!")
+                    print(f"✅ ML System initialized successfully! ({len(self.recommendation_system.movies_data):,} movies)")
                 else:
                     print("❌ Failed to train model")
             else:

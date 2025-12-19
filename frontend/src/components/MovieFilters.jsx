@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Filter, X, ChevronDown, ChevronUp } from "lucide-react";
 import "../css/MovieFilters.css";
 
 function MovieFilters({ onFiltersChange, currentFilters }) {
@@ -20,15 +21,15 @@ function MovieFilters({ onFiltersChange, currentFilters }) {
     const years = Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i);
 
     const types = [
-        { value: 'movie', label: '🎬 Movies' },
-        { value: 'series', label: '📺 TV Series' },
-        { value: 'episode', label: '🎭 Episodes' }
+        { value: 'movie', label: 'Movies' },
+        { value: 'series', label: 'TV Series' },
+        { value: 'episode', label: 'Episodes' }
     ];
 
     const sortOptions = [
-        { value: 'relevance', label: '⭐ Relevance' },
-        { value: 'year', label: '📅 Year' },
-        { value: 'title', label: '🔤 Title' }
+        { value: 'relevance', label: 'Relevance' },
+        { value: 'year', label: 'Year' },
+        { value: 'title', label: 'Title' }
     ];
 
     useEffect(() => {
@@ -57,18 +58,18 @@ function MovieFilters({ onFiltersChange, currentFilters }) {
     ).length;
 
     return (
-        <div className={`movie-filters ${isExpanded ? 'expanded' : ''}`}>
+        <div className={`movie-filters glass-panel ${isExpanded ? 'expanded' : ''}`}>
             <div className="filters-header">
                 <button
                     className="filters-toggle"
                     onClick={() => setIsExpanded(!isExpanded)}
                 >
-                    <span className="filter-icon">🎛️</span>
+                    <Filter className="filter-icon" size={20} />
                     <span>Filters</span>
                     {activeFilterCount > 0 && (
                         <span className="filter-count">{activeFilterCount}</span>
                     )}
-                    <span className={`arrow ${isExpanded ? 'up' : 'down'}`}>▼</span>
+                    {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
 
                 {activeFilterCount > 0 && (
@@ -82,7 +83,7 @@ function MovieFilters({ onFiltersChange, currentFilters }) {
                 <div className="filters-content">
                     <div className="filter-row">
                         <div className="filter-group">
-                            <label>🎭 Genre</label>
+                            <label>Genre</label>
                             <select
                                 value={localFilters.genre}
                                 onChange={(e) => handleFilterChange('genre', e.target.value)}
@@ -96,7 +97,7 @@ function MovieFilters({ onFiltersChange, currentFilters }) {
                         </div>
 
                         <div className="filter-group">
-                            <label>📅 Year</label>
+                            <label>Year</label>
                             <select
                                 value={localFilters.year}
                                 onChange={(e) => handleFilterChange('year', e.target.value)}
@@ -110,7 +111,7 @@ function MovieFilters({ onFiltersChange, currentFilters }) {
                         </div>
 
                         <div className="filter-group">
-                            <label>🎬 Type</label>
+                            <label>Type</label>
                             <select
                                 value={localFilters.type}
                                 onChange={(e) => handleFilterChange('type', e.target.value)}
@@ -123,7 +124,7 @@ function MovieFilters({ onFiltersChange, currentFilters }) {
                         </div>
 
                         <div className="filter-group">
-                            <label>📊 Sort By</label>
+                            <label>Sort By</label>
                             <select
                                 value={localFilters.sortBy}
                                 onChange={(e) => handleFilterChange('sortBy', e.target.value)}
@@ -143,26 +144,34 @@ function MovieFilters({ onFiltersChange, currentFilters }) {
                             <div className="filter-chips">
                                 {localFilters.genre && (
                                     <span className="filter-chip">
-                                        🎭 {localFilters.genre}
-                                        <button onClick={() => handleFilterChange('genre', '')}>×</button>
+                                        {localFilters.genre}
+                                        <button onClick={() => handleFilterChange('genre', '')}>
+                                            <X size={12} />
+                                        </button>
                                     </span>
                                 )}
                                 {localFilters.year && (
                                     <span className="filter-chip">
-                                        📅 {localFilters.year}
-                                        <button onClick={() => handleFilterChange('year', '')}>×</button>
+                                        {localFilters.year}
+                                        <button onClick={() => handleFilterChange('year', '')}>
+                                            <X size={12} />
+                                        </button>
                                     </span>
                                 )}
                                 {localFilters.type !== 'movie' && (
                                     <span className="filter-chip">
-                                        🎬 {types.find(t => t.value === localFilters.type)?.label}
-                                        <button onClick={() => handleFilterChange('type', 'movie')}>×</button>
+                                        {types.find(t => t.value === localFilters.type)?.label}
+                                        <button onClick={() => handleFilterChange('type', 'movie')}>
+                                            <X size={12} />
+                                        </button>
                                     </span>
                                 )}
                                 {localFilters.sortBy !== 'relevance' && (
                                     <span className="filter-chip">
-                                        📊 {sortOptions.find(s => s.value === localFilters.sortBy)?.label}
-                                        <button onClick={() => handleFilterChange('sortBy', 'relevance')}>×</button>
+                                        {sortOptions.find(s => s.value === localFilters.sortBy)?.label}
+                                        <button onClick={() => handleFilterChange('sortBy', 'relevance')}>
+                                            <X size={12} />
+                                        </button>
                                     </span>
                                 )}
                             </div>

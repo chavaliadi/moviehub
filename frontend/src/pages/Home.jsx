@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import MovieCard from "../components/MovieCard";
 import MovieFilters from "../components/MovieFilters";
+import { Search, Loader2, X } from "lucide-react";
 import "../css/Home.css";
 
 const API_KEY = "18e217aa";
@@ -17,11 +18,7 @@ function Home() {
     const [totalPages, setTotalPages] = useState(0);
     const [hasSearched, setHasSearched] = useState(false);
 
-    // Advanced search features (future use)
-    const [showFilters, setShowFilters] = useState(false);
-    const [searchSuggestions, setSearchSuggestions] = useState([]);
-    const [searchHistory, setSearchHistory] = useState([]);
-    const [viewMode, setViewMode] = useState('grid');
+    // Advanced search features
     const [filters, setFilters] = useState({
         genre: '',
         year: '',
@@ -31,7 +28,6 @@ function Home() {
 
     const handleFiltersChange = (newFilters) => {
         setFilters(newFilters);
-        // If we have a search query, re-search with new filters
         if (hasSearched && searchQuery) {
             setCurrentPage(1);
             setMovies([]);
@@ -39,7 +35,6 @@ function Home() {
         }
     };
 
-    // Category seeds for mixed homepage
     const categorySeeds = [
         "Marvel", "DC", "Telugu", "Bollywood", "Hollywood", "Pixar", "Disney",
         "Tamil", "Kannada", "Malayalam", "Anime", "Thriller", "Comedy",
@@ -68,7 +63,6 @@ function Home() {
         return a;
     };
 
-    // Fetch a mixed set of movies from multiple categories in parallel
     const fetchMixedMovies = async (countTerms = 4) => {
         setLoading(true);
         setError(null);
@@ -105,10 +99,9 @@ function Home() {
                 apiKey: API_KEY,
                 s: query,
                 page: page,
+                type: searchFilters.type || 'movie'
             };
 
-            // Add filters to params
-            if (searchFilters.type) params.type = searchFilters.type;
             if (searchFilters.year) params.y = searchFilters.year;
 
             const response = await axios.get(BASE_URL, { params });
@@ -128,7 +121,7 @@ function Home() {
             } else {
                 if (page === 1) {
                     setMovies([]);
-                    setError("No movies found");
+                    setError("No movies found matching your search.");
                 }
             }
         } catch (err) {
@@ -139,7 +132,6 @@ function Home() {
     };
 
     useEffect(() => {
-        // Mixed categories for homepage rows
         fetchMixedMovies(5);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -161,7 +153,6 @@ function Home() {
                 fetchMovies(searchQuery, nextPage);
             }
         } else {
-            // On homepage (no search), append another mixed batch
             fetchMixedMovies(4);
         }
     };
@@ -176,40 +167,50 @@ function Home() {
     };
 
     return (
-        <div className="home">
-            <form className="search-form" onSubmit={handleSearch}>
-                <input
-                    type="text"
-                    placeholder="Search for movies..."
-                    className="search-input"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <button type="submit" className="search-btn">
-                    🔍 Search
-                </button>
-                {hasSearched && (
-                    <button
-                        type="button"
-                        className="clear-btn"
-                        onClick={clearSearch}
-                    >
-                        ✕ Clear
+        <div className="home container">
+            <div className="hero-section">
+                <h1 className="hero-title">
+                    Discover <span className="text-gradient-primary">Cinema</span>
+                </h1>
+                <p className="hero-subtitle">
+                    Explore millions of movies, from timeless classics to the latest blockbusters.
+                </p>
+
+                <form className="search-wrapper glass-panel" onSubmit={handleSearch}>
+                    <Search className="search-icon" size={24} />
+                    <input
+                        type="text"
+                        placeholder="What do you want to watch?"
+                        className="search-input"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    {hasSearched && (
+                        <button
+                            type="button"
+                            className="clear-search-btn"
+                            onClick={clearSearch}
+                        >
+                            <X size={20} />
+                        </button>
+                    )}
+                    <button type="submit" className="search-btn-primary">
+                        Search
                     </button>
-                )}
-            </form>
+                </form>
 
-            <MovieFilters
-                onFiltersChange={handleFiltersChange}
-                currentFilters={filters}
-            />
+                <MovieFilters
+                    onFiltersChange={handleFiltersChange}
+                    currentFilters={filters}
+                />
+            </div>
 
-            {error && <div className="error-message">{error}</div>}
+            {error && <div className="error-message glass-panel">{error}</div>}
 
             {loading && movies.length === 0 && (
                 <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p>Searching for amazing movies...</p>
+                    <Loader2 className="spinner" size={48} />
+                    <p>Curating your experience...</p>
                 </div>
             )}
 
@@ -222,19 +223,17 @@ function Home() {
             {movies.length > 0 && (
                 <div className="pagination-container">
                     <button
-                        className="load-more-btn"
+                        className="load-more-btn glass-panel"
                         onClick={loadMoreMovies}
                         disabled={loading}
                     >
                         {loading ? (
                             <>
-                                <div className="loading-spinner-small"></div>
+                                <Loader2 className="spinner" size={20} />
                                 Loading...
                             </>
                         ) : (
-                            <>
-                                📚 Load More Movies
-                            </>
+                            "Load More Movies"
                         )}
                     </button>
                 </div>
@@ -242,7 +241,7 @@ function Home() {
 
             {!loading && hasSearched && movies.length === 0 && !error && (
                 <div className="no-movies">
-                    <p>No movies available. Try searching for something!</p>
+                    <p>No results found. Try a different query.</p>
                 </div>
             )}
         </div>
