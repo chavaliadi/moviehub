@@ -1,0 +1,348 @@
+.recommendations {
+    padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, 
+        rgba(10, 10, 20, 0.98) 0%, 
+        rgba(20, 15, 30, 0.95) 50%,
+        rgba(15, 10, 25, 0.98) 100%);
+    position: relative;
+    overflow-x: hidden;
+}
+
+.recommendations::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.recommendations > * {
+    position: relative;
+    z-index: 1;
+}
+
+.recommendations-header {
+    padding: 4rem 4% 3rem;
+    background: linear-gradient(to bottom, 
+        rgba(0, 0, 0, 0.4) 0%, 
+        rgba(0, 0, 0, 0) 100%);
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.recommendations-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, 
+        #ffffff 0%, 
+        #a78bfa 50%, 
+        #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+    text-shadow: 0 4px 20px rgba(167, 139, 250, 0.3);
+}
+
+.recommendations-subtitle {
+    font-size: clamp(0.95rem, 2vw, 1.15rem);
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 700px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.6;
+}
+
+.favorites-selector {
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.08) 0%, 
+        rgba(255, 255, 255, 0.03) 100%);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 2rem;
+    margin: 0 auto 3rem;
+    max-width: 800px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.favorites-selector h3 {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 1.25rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.favorites-selector h3::before {
+    content: '⭐';
+    font-size: 1.2rem;
+}
+
+.movies-row {
+    position: relative;
+    margin: 3rem 0;
+    padding: 0 4%;
+}
+
+.movies-row-title {
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    padding-left: 0.5rem;
+    border-left: 4px solid;
+    border-image: linear-gradient(135deg, #6366f1, #ec4899) 1;
+    text-transform: capitalize;
+    letter-spacing: -0.01em;
+}
+
+.movies-row-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 200px));
+    gap: 1.5rem;
+    padding: 0.5rem 0 2rem;
+    justify-content: start;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.movies-row-content::-webkit-scrollbar {
+    height: 8px;
+}
+
+.movies-row-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.movies-row-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}
+
+.movies-row-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Custom select styling */
+.favorites-select {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 1rem;
+    max-height: 200px;
+    overflow-y: auto;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.favorites-select:focus {
+    outline: none;
+    border-color: rgba(167, 139, 250, 0.6);
+    box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.favorites-select option {
+    padding: 0.75rem;
+    background: rgba(20, 20, 30, 0.95);
+    color: rgba(255, 255, 255, 0.9);
+    border: none;
+}
+
+.favorites-select option:checked {
+    background: linear-gradient(135deg, #6366f1, #ec4899);
+    color: white;
+}
+
+.refresh-button {
+    margin-top: 1.5rem;
+    padding: 0.9rem 2rem;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+    width: 100%;
+    box-shadow: 
+        0 4px 15px rgba(99, 102, 241, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.refresh-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 8px 25px rgba(99, 102, 241, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #f43f5e 100%);
+}
+
+.refresh-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.refresh-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Loading state */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    gap: 1.5rem;
+    padding: 3rem;
+}
+
+.loading-spinner::before {
+    content: '';
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-spinner::after {
+    content: 'Loading amazing recommendations...';
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-top: 1rem;
+}
+
+/* Error state */
+.error-message {
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, 
+        rgba(239, 68, 68, 0.15) 0%, 
+        rgba(220, 38, 38, 0.1) 100%);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    margin: 2rem auto;
+    max-width: 600px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+
+/* Empty state */
+.recommendations-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.recommendations-empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.recommendations-empty-text {
+    font-size: 1.2rem;
+    line-height: 1.6;
+}
+
+/* Responsive Design */
+@media (max-width: 1400px) {
+    .movies-row-content {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 180px));
+    }
+}
+
+@media (max-width: 768px) {
+    .recommendations-header {
+        padding: 3rem 4% 2rem;
+    }
+
+    .favorites-selector {
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .movies-row {
+        margin: 2rem 0;
+        padding: 0 3%;
+    }
+
+    .movies-row-content {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 150px));
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .recommendations-header {
+        padding: 2rem 3% 1.5rem;
+    }
+
+    .favorites-selector {
+        padding: 1.25rem;
+    }
+
+    .movies-row-content {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 140px));
+        gap: 0.75rem;
+    }
+
+    .refresh-button {
+        padding: 0.85rem 1.5rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* Smooth animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.movies-row {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.movies-row:nth-child(2) { animation-delay: 0.1s; }
+.movies-row:nth-child(3) { animation-delay: 0.2s; }
+.movies-row:nth-child(4) { animation-delay: 0.3s; }

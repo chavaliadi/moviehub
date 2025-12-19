@@ -1,6 +1,21 @@
-# React + Vite
+# MovieHub Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the frontend application for MovieHub, a movie recommendation and favorites management system built with React and Vite.
+
+## Features
+
+- Browse and search movies
+- Add/remove favorites
+- Get personalized recommendations
+- Netflix-style browsing interface
+
+## Tech Stack
+
+- React 19
+- Vite for build tooling
+- React Router for navigation
+- Axios for API calls
+- React Toastify for notifications
 
 Currently, two official plugins are available:
 

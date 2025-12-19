@@ -8,8 +8,8 @@ function Favourites() {
     if (favourites) {
         return (
             <>
-                <div>
-                    <h3>Your Favourites</h3>
+                <div className="container mt-4 mb-3">
+                    {/* <h2>Your Favourites</h2> */}
                 </div>
 
                 <div className="movies-grid">
@@ -18,7 +18,9 @@ function Favourites() {
                             <MovieCard key={movie.imdbID} movie={movie} />
                         ))
                     ) : (
-                        <p>No movies available</p>
+                        <div className="no-movies">
+                            <p>No favourites yet. Go to Home and add some!</p>
+                        </div>
                     )}
                 </div>
             </>
@@ -26,9 +28,8 @@ function Favourites() {
     }
 
     return (
-        <div className="favourites-empty">
-            <h3>No favourites Yet</h3>
-            <p>Start adding movies</p>
+        <div className="no-movies">
+            <p>No favourites yet. Go to Home and add some!</p>
         </div>
     );
 }
