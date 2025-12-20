@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Filter, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Filter, X, ChevronDown, ChevronUp, Search } from "lucide-react";
 import "../css/MovieFilters.css";
 
 function MovieFilters({ onFiltersChange, currentFilters }) {
@@ -32,9 +32,12 @@ function MovieFilters({ onFiltersChange, currentFilters }) {
         { value: 'title', label: 'Title' }
     ];
 
-    useEffect(() => {
+    // Removed auto-update useEffect to allow manual application
+
+    const handleApply = () => {
         onFiltersChange(localFilters);
-    }, [localFilters]);
+        setIsExpanded(false); // Optional: close on apply
+    };
 
     const handleFilterChange = (key, value) => {
         setLocalFilters(prev => ({
@@ -51,6 +54,7 @@ function MovieFilters({ onFiltersChange, currentFilters }) {
             sortBy: 'relevance'
         };
         setLocalFilters(resetFilters);
+        onFiltersChange(resetFilters); // Immediate update for clear
     };
 
     const activeFilterCount = Object.values(localFilters).filter(val =>
@@ -72,11 +76,18 @@ function MovieFilters({ onFiltersChange, currentFilters }) {
                     {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </button>
 
-                {activeFilterCount > 0 && (
-                    <button className="clear-filters" onClick={clearFilters}>
-                        Clear All
+                {/* Action Buttons */}
+                <div className="filter-actions">
+                    <button className="apply-filters" onClick={handleApply}>
+                        <Search size={14} />
+                        Apply
                     </button>
-                )}
+                    {activeFilterCount > 0 && (
+                        <button className="clear-filters" onClick={clearFilters}>
+                            Clear All
+                        </button>
+                    )}
+                </div>
             </div>
 
             {isExpanded && (

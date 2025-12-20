@@ -28,10 +28,20 @@ function Home() {
 
     const handleFiltersChange = (newFilters) => {
         setFilters(newFilters);
-        if (hasSearched && searchQuery) {
+
+        // If we have a search query, fetch immediately
+        if (searchQuery) {
             setCurrentPage(1);
             setMovies([]);
             fetchMovies(searchQuery, 1, newFilters);
+        } else {
+            // If no search query but filters are applied, try searching by genre or default "movie"
+            const searchTerm = newFilters.genre || "movie";
+            setSearchQuery(searchTerm); // Set the query visible to user? Maybe.
+            setCurrentPage(1);
+            setMovies([]);
+            setHasSearched(true);
+            fetchMovies(searchTerm, 1, newFilters);
         }
     };
 

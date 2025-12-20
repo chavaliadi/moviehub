@@ -5,6 +5,7 @@ import MovieCard from "../components/MovieCard";
 import { Sparkles, Search, Heart } from "lucide-react";
 import "../css/Recommendations.css";
 
+
 function Recommendations() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -32,9 +33,14 @@ function Recommendations() {
         return groups;
     };
 
-    const fetchRecommendations = async () => {
+    const fetchRecommendations = async (forceRefresh = false) => {
         if (!favourites.length) {
             setRecommendationsCache([]);
+            return;
+        }
+
+        // Don't refetch if we have data and not forcing refresh
+        if (!forceRefresh && recommendationsCache.length > 0) {
             return;
         }
 
@@ -100,10 +106,11 @@ function Recommendations() {
         }
     };
 
-    // Auto-fetch when favorites change
+    // Auto-fetch when favorites change, but respect cache
     useEffect(() => {
         if (favourites.length > 0) {
-            fetchRecommendations();
+            // Force refresh when favourites list changes to ensure we get new recommendations
+            fetchRecommendations(true);
         } else {
             setRecommendationsCache([]); // Clear if no favorites
         }
@@ -142,16 +149,28 @@ function Recommendations() {
                     <p>Try adding more diverse movies to your favorites.</p>
                 </div>
             ) : (
-                Object.entries(moviesByGenre).map(([genre, genreMovies]) => (
-                    <div key={genre} className="genre-section">
-                        <h2 className="genre-title">{genre}</h2>
-                        <div className="movies-grid">
-                            {genreMovies.map((movie) => (
-                                <MovieCard key={movie.imdbID} movie={movie} />
-                            ))}
-                        </div>
+                <>
+                    <div className="recommendations-actions">
+                        <button
+                            className="refresh-btn glass-panel"
+                            onClick={() => fetchRecommendations(true)}
+                            disabled={loading}
+                        >
+                            <Sparkles size={16} />
+                            Refresh Picks
+                        </button>
                     </div>
-                ))
+                    {Object.entries(moviesByGenre).map(([genre, genreMovies]) => (
+                        <div key={genre} className="genre-section">
+                            <h2 className="genre-title">{genre}</h2>
+                            <div className="movies-grid">
+                                {genreMovies.map((movie) => (
+                                    <MovieCard key={movie.imdbID} movie={movie} />
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </>
             )}
         </div>
     );

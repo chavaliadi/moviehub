@@ -7,6 +7,7 @@ Usage:
 """
 from flask import Flask
 from app.db import init_db, create_tables
+from app import create_app
 from app.models import User, Favorite
 import os
 from dotenv import load_dotenv
@@ -20,13 +21,14 @@ def main():
     print("🚀 Initializing database...")
     
     # Create Flask app
-    app = Flask(__name__)
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')
+    app = create_app()
     
-    # Initialize database
-    db = init_db(app)
+    # Database is already initialized in create_app
+    # db = init_db(app) 
+    # But we need access to the db object to create tables
+    from app.db import db
     
-    print(f"📦 Connected to database: {os.getenv('DATABASE_URL')}")
+    print(f"📦 Connected to database: {app.config.get('SQLALCHEMY_DATABASE_URI')}")
     print(f"📋 Creating tables for models: User, Favorite")
     
     # Create all tables
