@@ -13,58 +13,117 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 
+import threading
+
 class RecommendationService:
-    """Service class for handling ML-based movie recommendations"""
+    """Service class for handling ML-based movie recommendations (Singleton)"""
+    _instance = None
+    _lock = threading.Lock()
+
+    def __new__(cls):
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super(RecommendationService, cls).__new__(cls)
+                # Initialize the instance state only once
+                cls._instance.model_path = os.environ.get('MODEL_PATH', 'models/')
+                cls._instance.data_path = os.environ.get('DATA_PATH', 'data/')
+                cls._instance.model_loaded = False
+                cls._instance.recommendation_system = None
+                cls._instance.system_initialized = False
+                cls._instance._is_initializing = False
+                cls._instance._similar_cache = {}
+                cls._instance._cache_ttl_seconds = int(os.environ.get('ML_CACHE_TTL', '900'))
+        return cls._instance
 
     def __init__(self):
-        self.model_path = os.environ.get('MODEL_PATH', 'models/')
-        self.data_path = os.environ.get('DATA_PATH', 'data/')
-        self.model_loaded = False
-        self.recommendation_system = None
-        self.system_initialized = False
-        self._similar_cache = {}
-        self._cache_ttl_seconds = int(os.environ.get('ML_CACHE_TTL', '900'))
+        # State is already initialized in __new__
+        pass
 
-        # Lazy initialization; defer heavy load until first request
-        if os.environ.get('ML_EAGER_INIT', '0') == '1':
-            self._initialize_system()
 
     def _initialize_system(self):
-        """Initialize the ML recommendation system"""
+        """Initialize the ML recommendation system with tiered loading"""
+        if self.system_initialized or self._is_initializing:
+            return
+            
+        with self._lock:
+            if self.system_initialized or self._is_initializing:
+                return
+            self._is_initializing = True
+
         try:
-            print("🚀 Initializing ML Recommendation System...")
+            print("🚀 Initializing ML Recommendation System (Tiered Loading)...")
+
             use_large = os.environ.get('ML_USE_LARGE_DATASET', '1') == '1'
             global MovieRecommendationSystem
             if MovieRecommendationSystem is None:
                 # Import here to ensure sys.path is set
                 from backend.ml_engine.movie_recommendation_optimized import MovieRecommendationSystem as _MRS
                 MovieRecommendationSystem = _MRS
+            
+            # PHASE 1: Quick Start - Load 100K most popular movies
+            print("\n📊 PHASE 1: Quick Start (100K most popular movies)")
+            print("=" * 60)
+            
             self.recommendation_system = MovieRecommendationSystem(
                 use_large_dataset=use_large)
 
-            # Use env-configurable limit, default to 50000 to respect "dont load 1.3 m"
-            # This balances performance with recommendation quality.
-            limit_env = os.environ.get('ML_LOAD_LIMIT', '50000')
-            load_limit = int(limit_env) if limit_env and limit_env.isdigit() else 50000
-
-            if self.recommendation_system.load_data(limit=load_limit):
-                # Use env-configurable sample size (None = full dataset for accuracy)
-                sample = os.environ.get('ML_SAMPLE_SIZE')
-                sample_size = int(sample) if sample and sample.isdigit() else None
-                
-                if self.recommendation_system.train_model(sample_size=sample_size):
+            # Load 100K movies for quick start
+            quick_start_limit = int(os.environ.get('ML_QUICK_START_LIMIT', '100000'))
+            
+            if self.recommendation_system.load_data(limit=quick_start_limit):
+                if self.recommendation_system.train_model(sample_size=None):
                     self.model_loaded = True
                     self.system_initialized = True
-                    print(f"✅ ML System initialized successfully! ({len(self.recommendation_system.movies_data):,} movies)")
+                    print(f"✅ PHASE 1 Complete! Quick recommendations ready ({len(self.recommendation_system.movies_data):,} movies)")
+                    print("=" * 60)
+                    
+                    # PHASE 2: Background loading of full dataset
+                    full_limit = int(os.environ.get('ML_LOAD_LIMIT', '1500000'))
+                    if full_limit > quick_start_limit:
+                        self._start_full_dataset_loading(full_limit)
                 else:
-                    print("❌ Failed to train model")
+                    print("❌ Failed to train quick-start model")
             else:
-                print("❌ Failed to load data")
+                print("❌ Failed to load quick-start data")
 
         except Exception as e:
             print(f"❌ Error initializing ML system: {e}")
             self.model_loaded = False
             self.system_initialized = False
+        finally:
+            self._is_initializing = False
+    
+    def _start_full_dataset_loading(self, full_limit):
+        """Load full dataset in background (Phase 2)"""
+        import threading
+        
+        def load_full_dataset():
+            try:
+                print("\n📊 PHASE 2: Loading full dataset in background...")
+                print("=" * 60)
+                
+                # Create new instance for full dataset
+                from backend.ml_engine.movie_recommendation_optimized import MovieRecommendationSystem as _MRS
+                full_system = _MRS(use_large_dataset=True)
+                
+                if full_system.load_data(limit=full_limit):
+                    if full_system.train_model(sample_size=None):
+                        # Atomically replace the recommendation system
+                        self.recommendation_system = full_system
+                        print(f"✅ PHASE 2 Complete! Full dataset ready ({len(full_system.movies_data):,} movies)")
+                        print("=" * 60)
+                    else:
+                        print("❌ Phase 2: Failed to train full model")
+                else:
+                    print("❌ Phase 2: Failed to load full data")
+                    
+            except Exception as e:
+                print(f"❌ Phase 2 error: {e}")
+        
+        # Start background loading
+        thread = threading.Thread(target=load_full_dataset, daemon=True)
+        thread.start()
+        print("🔄 Phase 2 started in background (loading remaining movies)...")
 
     # Removed user-based recommendations stub to keep service minimal
 
@@ -238,11 +297,29 @@ class RecommendationService:
 
         # Add ML system info if available
         if self.recommendation_system:
+            movies_count = len(self.recommendation_system.movies_data) if self.recommendation_system.movies_data is not None else 0
+            
+            # Determine loading phase
+            quick_start_limit = int(os.environ.get('ML_QUICK_START_LIMIT', '100000'))
+            full_limit = int(os.environ.get('ML_LOAD_LIMIT', '1500000'))
+            
+            if movies_count >= full_limit * 0.9:  # 90% of full dataset
+                loading_phase = 'phase_2_complete'
+                phase_message = f'Full dataset loaded ({movies_count:,} movies)'
+            elif movies_count >= quick_start_limit * 0.9:  # 90% of quick start
+                loading_phase = 'phase_1_complete'
+                phase_message = f'Quick start complete, loading full dataset in background ({movies_count:,} movies)'
+            else:
+                loading_phase = 'initializing'
+                phase_message = f'Initializing ({movies_count:,} movies)'
+            
             status_info.update({
-                'movies_available': len(self.recommendation_system.movies_data) if self.recommendation_system.movies_data else 0,
+                'movies_available': movies_count,
                 'features_used': self.recommendation_system.feature_columns if hasattr(self.recommendation_system, 'feature_columns') else [],
                 'dataset_type': 'TMDB Large Dataset' if self.recommendation_system.use_large_dataset else 'Original Dataset',
-                'is_trained': self.recommendation_system.is_trained
+                'is_trained': self.recommendation_system.is_trained,
+                'loading_phase': loading_phase,
+                'phase_message': phase_message
             })
 
         return status_info

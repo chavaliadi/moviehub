@@ -61,3 +61,14 @@ export const getMovieByTitle = async (title) => {
     const data = await res.json();
     return data?.Response === 'True' ? data : null;
 };
+
+export const getMLStatus = async () => {
+    const url = `${BACKEND_URL}/api/ml/status`;
+    try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        return res.json();
+    } catch (err) {
+        return null;
+    }
+};

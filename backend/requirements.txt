@@ -5,10 +5,10 @@ Flask-RESTful==0.3.10
 gunicorn==21.2.0
 
 # Data Processing and ML
-pandas==2.1.1
-numpy==1.24.3
-scikit-learn==1.3.0
-scipy==1.11.1
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+scipy>=1.11.0
 
 # API and HTTP
 requests==2.31.0
@@ -33,7 +33,7 @@ Flask-Caching==2.0.2
 
 # Utilities
 python-dateutil==2.8.2
-Pillow==10.0.0
+Pillow>=10.0.0
 tqdm==4.66.1
 
 # Development and Testing

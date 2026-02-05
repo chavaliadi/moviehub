@@ -1,19 +1,37 @@
 import { useEffect, useState } from "react";
-import { getSimilarByTitle, getMovieByTitle } from "../services/api";
+import { getSimilarByTitle, getMovieByTitle, getMLStatus } from "../services/api";
 import { useMovieContext } from "../contexts/MovieContext";
 import MovieCard from "../components/MovieCard";
-import { Sparkles, Search, Heart } from "lucide-react";
+import { Sparkles, Search, Heart, Info } from "lucide-react";
 import "../css/Recommendations.css";
 
 
 function Recommendations() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [mlStatus, setMlStatus] = useState(null);
     const {
         favourites,
         recommendationsCache,
         setRecommendationsCache
     } = useMovieContext();
+
+    // Fetch ML status periodically
+    useEffect(() => {
+        const fetchMLStatus = async () => {
+            try {
+                const status = await getMLStatus();
+                setMlStatus(status);
+            } catch (err) {
+                console.warn("Failed to fetch ML status:", err);
+            }
+        };
+
+        fetchMLStatus();
+        // Check status every 30 seconds while phase 1 is active
+        const interval = setInterval(fetchMLStatus, 30000);
+        return () => clearInterval(interval);
+    }, []);
 
     const groupMoviesByGenre = (movieList) => {
         const groups = {};
@@ -47,15 +65,27 @@ function Recommendations() {
         setLoading(true);
         setError(null);
         try {
-            // Use all favorites
-            const favoriteTitles = favourites.map(f => f.Title).filter(Boolean);
+            // Balanced approach: Use top 5 favorites (middle ground)
+            const favoriteTitles = favourites
+                .slice(0, 5)
+                .map(f => f.Title || f.movie_title || f.title)
+                .filter(Boolean);
 
-            // Parallel fetch
+            if (favoriteTitles.length === 0) {
+                setRecommendationsCache([]);
+                setLoading(false);
+                return;
+            }
+
+            // Parallel fetch with timeout
             const recommendationPromises = favoriteTitles.map(title =>
-                getSimilarByTitle(title, 5).catch(err => {
-                    console.warn(`Recommendation error for ${title}:`, err);
-                    return { success: false, similar_movies: [] };
-                })
+                Promise.race([
+                    getSimilarByTitle(title, 6).catch(err => {
+                        // console.warn(`Recommendation error for ${title}:`, err);
+                        return { success: false, similar_movies: [] };
+                    }),
+                    new Promise(resolve => setTimeout(() => resolve({ success: false, similar_movies: [] }), 8000))
+                ])
             );
 
             const recommendationResults = await Promise.all(recommendationPromises);
@@ -64,42 +94,59 @@ function Recommendations() {
             const allRecs = [];
 
             // Existing favorites IDs to exclude from recommendations
-            const favIds = new Set(favourites.map(f => f.imdbID));
+            const favIds = new Set(favourites.map(f => f.imdbID || f.imdb_id));
 
-            recommendationResults.forEach(data => {
-                if (data?.success && Array.isArray(data.similar_movies)) {
+            recommendationResults.forEach((data, index) => {
+                if (data?.success && Array.isArray(data.similar_movies) && data.similar_movies.length > 0) {
                     data.similar_movies.forEach(rec => {
                         // Avoid duplicates and don't recommend movies already in favorites
-                        if (!allTitles.has(rec.title)) {
+                        if (rec.title && !allTitles.has(rec.title)) {
                             allTitles.add(rec.title);
                             allRecs.push(rec.title);
                         }
                     });
+                } else if (!data?.success) {
+                    // Log failed requests for debugging
+                    // console.warn(`Failed to get recommendations for: ${favoriteTitles[index]}`);
                 }
             });
 
-            // Limit total recommendations
-            const limitedRecs = allRecs.slice(0, 40);
+            // Balanced: 30 recommendations (middle ground between 20 and 40)
+            const limitedRecs = allRecs.slice(0, 30);
 
-            // Fetch details
-            const batchSize = 10;
+            if (limitedRecs.length === 0) {
+                setRecommendationsCache([]);
+                setLoading(false);
+                return;
+            }
+
+            // Fetch details with balanced batch size
+            const batchSize = 8;
             const allDetails = [];
 
             for (let i = 0; i < limitedRecs.length; i += batchSize) {
                 const batch = limitedRecs.slice(i, i + batchSize);
                 const batchPromises = batch.map(title =>
-                    getMovieByTitle(title).catch(() => null)
+                    Promise.race([
+                        getMovieByTitle(title).catch(() => null),
+                        new Promise(resolve => setTimeout(() => resolve(null), 5000))
+                    ])
                 );
                 const batchResults = await Promise.all(batchPromises);
 
-                // Filter out nulls and already favorited movies (double check with ID now)
+                // Filter out nulls and already favorited movies
                 const validMovies = batchResults.filter(m => m && m.Response === 'True' && !favIds.has(m.imdbID));
                 allDetails.push(...validMovies);
+
+                // Show progress by updating cache incrementally
+                if (allDetails.length > 0) {
+                    setRecommendationsCache([...allDetails]);
+                }
             }
 
             setRecommendationsCache(allDetails);
         } catch (e) {
-            console.error("Recommendations error:", e);
+            // console.error("Recommendations error:", e);
             setError("Unable to generate recommendations at the moment.");
         } finally {
             setLoading(false);
@@ -109,12 +156,21 @@ function Recommendations() {
     // Auto-fetch when favorites change, but respect cache
     useEffect(() => {
         if (favourites.length > 0) {
-            // Force refresh when favourites list changes to ensure we get new recommendations
-            fetchRecommendations(true);
+            // Only fetch if cache is empty or favorites changed significantly
+            const favoriteIds = favourites.map(f => f.imdbID || f.imdb_id).join(',');
+            const cachedFavoriteIds = recommendationsCache.length > 0
+                ? recommendationsCache.map(m => m.imdbID).join(',')
+                : '';
+
+            // Only force refresh if favorites actually changed
+            if (!cachedFavoriteIds || favoriteIds !== cachedFavoriteIds) {
+                fetchRecommendations(true);
+            }
         } else {
             setRecommendationsCache([]); // Clear if no favorites
         }
-    }, [favourites]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [favourites.length]);
 
     const moviesByGenre = groupMoviesByGenre(recommendationsCache);
 
@@ -127,6 +183,30 @@ function Recommendations() {
                 <p className="page-subtitle">
                     Personalized picks based on your collection.
                 </p>
+
+                {/* ML Status Indicator */}
+                {mlStatus && mlStatus.loading_phase !== 'phase_2_complete' && (
+                    <div className="ml-status-banner" style={{
+                        background: 'rgba(139, 92, 246, 0.1)',
+                        border: '1px solid rgba(139, 92, 246, 0.3)',
+                        borderRadius: '8px',
+                        padding: '12px 16px',
+                        marginTop: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                    }}>
+                        <Info size={20} style={{ color: '#8b5cf6' }} />
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: '500', marginBottom: '4px' }}>
+                                {mlStatus.loading_phase === 'phase_1_complete' ? '🔄 Improving Recommendations' : '⚡ Quick Start Active'}
+                            </div>
+                            <div style={{ fontSize: '0.9em', opacity: 0.8 }}>
+                                {mlStatus.phase_message}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {favourites.length === 0 ? (

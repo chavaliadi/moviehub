@@ -1,8 +1,9 @@
 .recommendations {
-    padding-top: calc(var(--header-height) + 2rem);
     padding-bottom: 2rem;
-    min-height: 100vh;
+    position: relative;
+    z-index: 1;
 }
+
 
 .recommendations-header {
     text-align: center;
@@ -117,19 +118,73 @@
 }
 
 /* Empty States */
-.recommendations-empty {
-    padding: 2rem;
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
     text-align: center;
     color: var(--text-muted);
-    background: var(--glass-bg);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--glass-border);
+    min-height: 400px;
 }
 
-.recommendations-empty-icon {
-    font-size: 2rem;
-    margin-bottom: 0.75rem;
-    opacity: 0.5;
+.empty-state h2 {
+    margin: 1rem 0 0.5rem;
+    color: var(--text-main);
+    font-size: 1.5rem;
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    font-size: 1rem;
+    max-width: 400px;
+}
+
+.empty-icon {
+    color: var(--primary);
+    opacity: 0.6;
+    margin-bottom: 1rem;
+}
+
+.error-message {
+    padding: 2rem;
+    text-align: center;
+    color: var(--accent);
+    background: var(--glass-bg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--accent);
+    margin: 2rem auto;
+    max-width: 600px;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    min-height: 400px;
+    color: var(--text-muted);
+}
+
+.loading-container p {
+    margin-top: 1rem;
+    font-size: 1rem;
+}
+
+.movies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .movies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+    }
 }
 
 /* Genre Sections */

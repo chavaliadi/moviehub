@@ -104,7 +104,12 @@ button {
 .container {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0 2rem;
+  padding-inline: 2rem;
+}
+
+.main-content {
+  padding-top: var(--header-height);
+  min-height: calc(100vh - var(--header-height));
 }
 
 .glass-panel {
@@ -114,6 +119,7 @@ button {
   border: 1px solid var(--glass-border);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
+
 
 .text-gradient {
   background: linear-gradient(135deg, var(--text-main) 0%, rgba(255, 255, 255, 0.7) 100%);

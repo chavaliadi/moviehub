@@ -23,7 +23,7 @@ export const MovieProvider = ({ children }) => {
                     const response = await axios.get('/api/favorites/');
                     setFavourites(response.data);
                 } catch (error) {
-                    console.error("Failed to fetch favorites", error);
+                    // console.error("Failed to fetch favorites", error);
                 }
             };
             fetchFavorites();
@@ -90,7 +90,7 @@ export const MovieProvider = ({ children }) => {
                     });
                 }
             } catch (error) {
-                console.error("Failed to add to favorites", error);
+                // console.error("Failed to add to favorites", error);
             }
         } else {
             setFavourites(prev => {
@@ -107,7 +107,7 @@ export const MovieProvider = ({ children }) => {
                 await axios.delete(`/api/favorites/${movieId}`);
                 setFavourites(prev => prev.filter(movie => (movie.imdb_id || movie.imdbID) !== movieId));
             } catch (error) {
-                console.error("Failed to remove from favorites", error);
+                // console.error("Failed to remove from favorites", error);
             }
         } else {
             setFavourites(prev => prev.filter(movie => (movie.imdb_id || movie.imdbID) !== movieId));

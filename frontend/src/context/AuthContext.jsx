@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
                     setUser(null);
                 }
             } catch (error) {
-                console.error('Auth check failed:', error);
+                // console.error('Auth check failed:', error);
                 setUser(null);
             } finally {
                 setLoading(false);
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
                 return { success: true };
             }
         } catch (error) {
-            console.error('Login failed:', error);
+            // console.error('Login failed:', error);
             return {
                 success: false,
                 error: error.response?.data?.error || 'Login failed. Please check your credentials.'
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
                 return { success: true };
             }
         } catch (error) {
-            console.error('Registration failed:', error);
+            // console.error('Registration failed:', error);
             return {
                 success: false,
                 error: error.response?.data?.error || 'Registration failed. Please try again.'
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
             window.location.href = '/';
         } catch (error) {
-            console.error('Logout failed:', error);
+            // console.error('Logout failed:', error);
         }
     };
 

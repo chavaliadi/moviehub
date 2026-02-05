@@ -88,6 +88,10 @@ def me():
             'authenticated': True,
             'user': current_user.to_dict()
         })
+    return jsonify({
+        'authenticated': False,
+        'user': None
+    })
 @auth_bp.route('/update', methods=['PUT'])
 @login_required
 def update_profile():

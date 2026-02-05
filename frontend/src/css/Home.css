@@ -1,8 +1,7 @@
 .home {
-  padding-top: calc(var(--header-height) + 4rem);
   padding-bottom: 2rem;
-  min-height: 100vh;
 }
+
 
 /* Hero Section */
 .hero-section {

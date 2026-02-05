@@ -1,9 +1,9 @@
 .settings-page {
-    padding-top: calc(var(--header-height) + 2rem);
     padding-bottom: 4rem;
     min-height: 100vh;
     animation: fadeIn 0.5s ease;
 }
+
 
 .settings-grid {
     display: grid;

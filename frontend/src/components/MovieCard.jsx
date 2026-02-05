@@ -41,6 +41,7 @@ function MovieCard({ movie }) {
         if (!url.includes('.') || url.match(/^[A-Z0-9_]+\.jpg$/i)) return null;
         if (url.startsWith("http://") || url.startsWith("https://")) return url;
         if (url.startsWith("//")) return `https:${url}`;
+        if (url.startsWith("/")) return `https://image.tmdb.org/t/p/w500${url}`;
         return null;
     };
 

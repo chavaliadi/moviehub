@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+instance/
+.pytest_cache/
+*.db
+.DS_Store
+data/*.csv
+models/*.joblib

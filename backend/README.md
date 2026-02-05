@@ -1,172 +1,67 @@
-# MovieHub Backend
+# MovieHub Backend 🚀
 
-A powerful Flask-based backend for the MovieHub application with built-in support for ML recommendation systems.
+The core API for MovieHub, built with Flask and powered by an advanced ML recommendation engine.
 
-## 🚀 Features
+## ✨ Core Features
 
-- **Flask REST API** - Modern, scalable web framework
-- **ML-Ready Architecture** - Prepared for recommendation algorithms
-- **Database Integration** - SQLAlchemy ORM support
-- **Caching System** - Redis integration for performance
-- **Authentication Ready** - JWT-based auth system
-- **API Documentation** - RESTful endpoints with proper error handling
+- **Tiered ML Engine** - Immediate 100K movie quick-start, auto-scaling to 1.3M in the background.
+- **Session Auth** - Secure user management using Flask-Login.
+- **Singleton Service** - Optimized memory usage and thread-safe ML model access.
+- **RESTful API** - Clean endpoints for movies, favorites, and recommendations.
+- **Production Ready** - Configured with Gunicorn and Docker support.
 
 ## 📁 Project Structure
 
 ```
 backend/
-├── app/                    # Main application package
-│   ├── __init__.py        # Flask app factory
-│   ├── routes.py          # Route blueprints
-│   ├── api/               # RESTful API resources
-│   │   ├── __init__.py
-│   │   ├── movie_api.py   # Movie-related endpoints
-│   │   └── recommendation_api.py  # ML recommendation endpoints
-│   └── services/          # Business logic layer
-│       ├── movie_service.py       # Movie operations
-│       └── recommendation_service.py  # ML operations
-├── config/                # Configuration files
-│   └── config.py          # App configuration classes
-├── ml_engine/             # ML algorithms (to be implemented)
-├── data/                  # Data files and datasets
-├── models/                # Trained ML models
-├── utils/                 # Utility functions
-├── requirements.txt       # Python dependencies
-├── run.py                 # Application entry point
-├── .env.example          # Environment variables template
-└── README.md             # This file
+├── app/
+│   ├── api/               # API Blueprints (Movies, Recommendations, Auth)
+│   ├── models/            # SQLAlchemy Database Models
+│   ├── services/          # RecommendationService (Singleton)
+│   └── __init__.py        # App Factory & Background Tasks
+├── ml_engine/             # TF-IDF & Cosine Similarity Implementation
+├── data/                  # TMDB Datasets (tmbd.csv)
+├── instance/              # Local SQLite database
+├── Dockerfile             # Container configuration
+└── run.py                 # Development entry point
 ```
 
-## 🛠️ Setup Instructions
+## 🛠️ Getting Started
 
-### 1. Install Dependencies
-
+### 1. Setup Environment
 ```bash
-# Create virtual environment
 python -m venv venv
-
-# Activate virtual environment
-# On macOS/Linux:
-source venv/bin/activate
-# On Windows:
-venv\Scripts\activate
-
-# Install dependencies
+source venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
 ```
 
-### 2. Environment Configuration
-
+### 2. Configure
 ```bash
-# Copy environment template
 cp .env.example .env
-
-# Edit .env file with your configuration
-nano .env
+# Ensure ML_EAGER_INIT=1 for startup loading
 ```
 
-### 3. Run the Application
-
-```bash
-# Set environment
-export FLASK_ENV=development
-
-# Run the app
-python run.py
-```
-
-The server will start at `http://localhost:5000`
-
-## 🔌 API Endpoints
-
-### Core Endpoints
-
-- `GET /` - API information
-- `GET /health` - Health check
-- `GET /api/movies` - Get movies with pagination
-- `GET /api/movies/search?q=<query>` - Search movies
-- `GET /api/movies/<imdb_id>` - Get movie details
-- `GET /api/movies/random?count=<number>` - Get random movies
-
-### ML Endpoints
-
-- `GET /api/ml/recommendations/similar?title=<movie title>&limit=<n>` - Similar movies by title (or use `movie_id` if numeric TMDB id)
-- `GET /api/ml/recommendations/movie/<movie_title>?limit=<n>` - Similar movies (path param)
-- `GET /api/ml/search?q=<query>&limit=<n>` - Fuzzy search titles
-- `GET /api/ml/status` - Model status
-
-## 🧠 ML Integration
-
-The backend is designed to integrate seamlessly with machine learning systems:
-
-### Current Status
-- ✅ **Content-based recommender** using TF-IDF over full dataset (on-demand similarity)
-- ✅ **REST API** endpoints wired to ML service
-- 🔄 **Collaborative filtering** (user-based) planned for later
-
-### Future ML Features
-- **Collaborative Filtering** - User-based recommendations
-- **Content-Based Filtering** - Movie similarity algorithms
-- **Hybrid Recommendations** - Combined approach for better results
-- **Model Training Pipeline** - Automated model updates
-- **Performance Monitoring** - ML model metrics and evaluation
-
-## 🗄️ Database Integration
-
-### Current Setup
-- **SQLite** - Default development database
-- **SQLAlchemy** - ORM ready for production databases
-- **PostgreSQL** - Production-ready configuration
-
-### Future Features
-- **User Management** - User accounts and preferences
-- **Rating System** - Movie ratings and reviews
-- **Watch History** - User viewing patterns
-- **Social Features** - Friends and sharing
-
-## 🚀 Deployment
-
-### Development
+### 3. Run
 ```bash
 python run.py
 ```
+Server starts at `http://localhost:5001`.
 
-### Production
-```bash
-# Using Gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 run:app
+## 🔌 Key API Endpoints
 
-# Using Docker (coming soon)
-docker-compose up
-```
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/ml/status` | GET | Check model loading phase & movie count |
+| `/api/ml/recommendations/similar` | GET | Get AI-based movie recommendations |
+| `/api/auth/login` | POST | Authenticate user |
+| `/api/favorites/` | GET | Retrieve user's saved movies |
 
-## 🔧 Configuration
+## 🧠 ML System Details
 
-The application supports multiple environments:
+The backend implements a **content-based filtering** algorithm using:
+- **Vectorization**: TF-IDF with custom feature weighting.
+- **Similarity**: Cosine similarity via sparse CSR matrices.
+- **Strategy**: Tiered loading to balance startup speed with dataset depth.
 
-- **Development** - Debug mode, SQLite database
-- **Production** - Production settings, PostgreSQL
-- **Testing** - Test database, debugging disabled
-
-## 📚 Next Steps
-
-1. **Implement ML Algorithms** - Add recommendation engines
-2. **Database Models** - Create user and movie data models
-3. **Authentication** - Implement JWT-based user auth
-4. **Caching** - Add Redis for performance
-5. **Testing** - Add comprehensive test suite
-6. **Documentation** - API documentation with Swagger
-
-## 🤝 Contributing
-
-This backend is designed to be easily extensible. Key areas for contribution:
-
-- ML algorithm implementation
-- Database schema design
-- API endpoint enhancements
-- Performance optimization
-- Testing and documentation
-
-## 📄 License
-
-This project is part of the MovieHub application.
+---
+*Part of the MovieHub Project*

@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: moviehub-backend
+    ports:
+      - "5001:5001"
+    environment:
+      - ML_EAGER_INIT=1
+      - ML_LOAD_LIMIT=1500000
+      - ML_QUICK_START_LIMIT=100000
+      - DATABASE_URL=sqlite:////app/instance/moviehub.db
+    volumes:
+      - ./backend/instance:/app/instance
+      - ./backend/data:/app/data
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: moviehub-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always

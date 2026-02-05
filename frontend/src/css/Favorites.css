@@ -1,9 +1,7 @@
 .favorites {
     padding: 2rem;
-    padding-top: 80px;
-    /* Navbar height */
-    min-height: 100vh;
 }
+
 
 .favorites-header {
     margin-bottom: 2rem;

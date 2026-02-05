@@ -1,27 +1,55 @@
-# MovieHub Frontend
+# MovieHub Frontend 🎨
 
-This is the frontend application for MovieHub, a movie recommendation and favorites management system built with React and Vite.
+A modern, cinematic React interface for the MovieHub recommendation system.
 
-## Features
+## ✨ Features
 
-- Browse and search movies
-- Add/remove favorites
-- Get personalized recommendations
-- Netflix-style browsing interface
+- **Cinematic UI** - Netflix-inspired design with Glassmorphism and smooth transitions.
+- **Live ML Status** - Real-time tracking of the backend ML engine's loading phases.
+- **Universal Search** - Fast movie searching across the TMDB universe.
+- **Favorites Management** - Interactive "Like" system with instant feedback.
+- **Personalized Feed** - Dynamic recommendations that update as the ML engine scales.
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-- React 19
-- Vite for build tooling
-- React Router for navigation
-- Axios for API calls
-- React Toastify for notifications
+- **Framework**: React 19 (Vite)
+- **State**: React Context API
+- **Routing**: React Router DOM 7
+- **Style**: Custom CSS Variables & Design Tokens
+- **Icons**: Lucide React
+- **Toast**: React Toastify
 
-Currently, two official plugins are available:
+## 🚀 Getting Started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 1. Install
+```bash
+npm install
+```
 
-## Expanding the ESLint configuration
+### 2. Run
+```bash
+npm run dev
+```
+App will be available at `http://localhost:5173`.
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 3. Build for Production
+```bash
+npm run build
+```
+
+## 📁 Key Components
+
+- `NavBar.jsx`: Glassmorphic navigation with auth status.
+- `MovieCard.jsx`: Interactive card with hover effects and favorite toggling.
+- `Recommendations.jsx`: The AI-driven discovery engine view.
+- `Profile.jsx`: User stats and account overview.
+
+## 🌈 Design System
+
+The frontend uses a custom CSS architecture defined in `src/css/index.css`:
+- **Glassmorphism**: `.glass-panel` utility for consistent frosted-glass effects.
+- **Animations**: Global `.animate-fade-in` and spring-based transitions.
+- **Theme**: High-contrast cinematic dark mode by default.
+
+---
+*Part of the MovieHub Project*
