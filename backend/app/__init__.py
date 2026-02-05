@@ -25,7 +25,7 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
 
     # Configure User Loader
-    from app.models.user import User
+    from app.models import User
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -53,7 +53,7 @@ def create_app(config_class=Config):
     db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '') or ''
     if db_uri.startswith('sqlite') and (app.config.get('DEBUG') or os.getenv('FLASK_ENV') == 'development'):
         # Ensure models are imported so tables are registered
-        from app.models import user, favorite  # noqa: F401
+        from app import models  # noqa: F401
         create_tables(app)
 
     @app.route('/health')

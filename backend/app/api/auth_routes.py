@@ -1,7 +1,7 @@
 from flask import Blueprint, redirect, url_for, session, current_app, jsonify, request
 from authlib.integrations.flask_client import OAuth
 from flask_login import login_user, logout_user, login_required, current_user
-from app.models.user import User
+from app.models import User
 from app.db import db
 from datetime import datetime
 

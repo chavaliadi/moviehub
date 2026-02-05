@@ -4,13 +4,9 @@ import json
 import os
 from typing import Dict, List, Optional
 import time
-MovieRecommendationSystem = None  # type: ignore
-
-# Ensure repository root is importable for ML module
-_CURRENT_DIR = os.path.dirname(__file__)
-_REPO_ROOT = os.path.abspath(os.path.join(_CURRENT_DIR, '..', '..', '..'))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
+# The ML engine is in the root directory in Docker
+from ml_engine.movie_recommendation_optimized import MovieRecommendationSystem as _MRS
+MovieRecommendationSystem = _MRS
 
 
 import threading
@@ -56,8 +52,7 @@ class RecommendationService:
             use_large = os.environ.get('ML_USE_LARGE_DATASET', '1') == '1'
             global MovieRecommendationSystem
             if MovieRecommendationSystem is None:
-                # Import here to ensure sys.path is set
-                from backend.ml_engine.movie_recommendation_optimized import MovieRecommendationSystem as _MRS
+                from ml_engine.movie_recommendation_optimized import MovieRecommendationSystem as _MRS
                 MovieRecommendationSystem = _MRS
             
             # PHASE 1: Quick Start - Load 100K most popular movies
@@ -103,7 +98,7 @@ class RecommendationService:
                 print("=" * 60)
                 
                 # Create new instance for full dataset
-                from backend.ml_engine.movie_recommendation_optimized import MovieRecommendationSystem as _MRS
+                from ml_engine.movie_recommendation_optimized import MovieRecommendationSystem as _MRS
                 full_system = _MRS(use_large_dataset=True)
                 
                 if full_system.load_data(limit=full_limit):
