@@ -11,6 +11,7 @@ class User(UserMixin, db.Model):
     """User model for storing user information."""
     
     __tablename__ = 'users'
+    __table_args__ = {'extend_existing': True}
     
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)

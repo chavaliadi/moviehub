@@ -10,13 +10,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class Base(DeclarativeBase):
-    """Base class for all database models."""
-    pass
-
-
-# Initialize SQLAlchemy with custom base class
-db = SQLAlchemy(model_class=Base)
+# Initialize SQLAlchemy
+db = SQLAlchemy()
 
 
 def init_db(app):

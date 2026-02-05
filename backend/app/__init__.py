@@ -24,11 +24,9 @@ def create_app(config_class=Config):
     # Initialize Flask-Login
     login_manager.init_app(app)
 
-    # Configure User Loader
-    from app.models import User
-
     @login_manager.user_loader
     def load_user(user_id):
+        from app.models import User
         return User.query.get(int(user_id))
 
     api = Api(app, prefix='/api')

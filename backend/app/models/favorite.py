@@ -26,6 +26,7 @@ class Favorite(db.Model):
     # Ensure user can't favorite same movie twice
     __table_args__ = (
         UniqueConstraint('user_id', 'imdb_id', name='unique_user_favorite'),
+        {'extend_existing': True}
     )
     
     def __repr__(self):
