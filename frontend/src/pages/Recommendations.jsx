@@ -153,21 +153,14 @@ function Recommendations() {
         }
     };
 
-    // Auto-fetch when favorites change, but respect cache
+    // Auto-fetch only if cache is empty and there are favorites
     useEffect(() => {
-        if (favourites.length > 0) {
-            // Only fetch if cache is empty or favorites changed significantly
-            const favoriteIds = favourites.map(f => f.imdbID || f.imdb_id).join(',');
-            const cachedFavoriteIds = recommendationsCache.length > 0
-                ? recommendationsCache.map(m => m.imdbID).join(',')
-                : '';
-
-            // Only force refresh if favorites actually changed
-            if (!cachedFavoriteIds || favoriteIds !== cachedFavoriteIds) {
-                fetchRecommendations(true);
-            }
-        } else {
-            setRecommendationsCache([]); // Clear if no favorites
+        if (favourites.length > 0 && recommendationsCache.length === 0) {
+            // Only fetch if we have favorites but no cached recommendations
+            fetchRecommendations(false);
+        } else if (favourites.length === 0) {
+            // Clear cache if no favorites
+            setRecommendationsCache([]);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [favourites.length]);
@@ -183,6 +176,11 @@ function Recommendations() {
                 <p className="page-subtitle">
                     Personalized picks based on your collection.
                 </p>
+                {favourites.length > 0 && recommendationsCache.length > 0 && (
+                    <p className="page-subtitle" style={{ fontSize: '0.85em', opacity: 0.7, marginTop: '0.5rem' }}>
+                        💡 Updated your favorites? Click "Refresh Picks" to get new recommendations.
+                    </p>
+                )}
 
                 {/* ML Status Indicator */}
                 {mlStatus && mlStatus.loading_phase !== 'phase_2_complete' && (
