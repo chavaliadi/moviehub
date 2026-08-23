@@ -8,6 +8,7 @@ export const useMovieContext = () => useContext(MovieContext);
 
 export const MovieProvider = ({ children }) => {
     const [favourites, setFavourites] = useState([]);
+    const [ratings, setRatings] = useState({});
     const [selectedForRecommendations, setSelectedForRecommendations] = useState([]);
     const [recommendationsCache, setRecommendationsCache] = useState({});
     const [showRecommendationPopup, setShowRecommendationPopup] = useState(false);
@@ -17,21 +18,29 @@ export const MovieProvider = ({ children }) => {
     // Load/Save Favorites based on Auth state
     useEffect(() => {
         if (user) {
-            // Load favorites from API
-            const fetchFavorites = async () => {
+            // Load favorites and ratings from API
+            const fetchData = async () => {
                 try {
-                    const response = await axios.get('/api/favorites/');
-                    setFavourites(response.data);
+                    const favResponse = await axios.get('/api/favorites/');
+                    setFavourites(favResponse.data);
+                    
+                    const ratResponse = await axios.get('/api/ratings/');
+                    const ratingsDict = {};
+                    ratResponse.data.forEach(r => {
+                        ratingsDict[r.imdb_id] = r.score;
+                    });
+                    setRatings(ratingsDict);
                 } catch (error) {
-                    // console.error("Failed to fetch favorites", error);
+                    // console.error("Failed to fetch user data", error);
                 }
             };
-            fetchFavorites();
+            fetchData();
         } else {
-            // Load from local storage
+            // Load from local storage (for favorites only)
             const storedFavs = localStorage.getItem("favorites");
             if (storedFavs) setFavourites(JSON.parse(storedFavs));
             else setFavourites([]);
+            setRatings({}); // Clear ratings when logged out
         }
     }, [user]);
 
@@ -130,11 +139,57 @@ export const MovieProvider = ({ children }) => {
         return favourites.some(movie => (movie.imdb_id || movie.imdbID) === movieId);
     };
 
+    const rateMovie = async (movie, score) => {
+        if (!user) return false;
+        
+        const imdbID = movie.imdbID || movie.imdb_id;
+        
+        try {
+            await axios.post('/api/ratings/', {
+                imdb_id: imdbID,
+                score: score,
+                title: movie.Title || movie.movie_title,
+                poster_path: movie.Poster || movie.movie_poster,
+                release_date: movie.Year || movie.movie_year,
+                media_type: movie.Type || movie.movie_type || 'movie'
+            });
+            
+            setRatings(prev => ({
+                ...prev,
+                [imdbID]: score
+            }));
+            return true;
+        } catch (error) {
+            // console.error("Failed to rate movie", error);
+            return false;
+        }
+    };
+
+    const removeRating = async (movieId) => {
+        if (!user) return false;
+        
+        try {
+            await axios.delete(`/api/ratings/${movieId}`);
+            setRatings(prev => {
+                const newRatings = { ...prev };
+                delete newRatings[movieId];
+                return newRatings;
+            });
+            return true;
+        } catch (error) {
+            // console.error("Failed to remove rating", error);
+            return false;
+        }
+    };
+
     const value = {
         favourites,
+        ratings,
         addToFavourites,
         removeFromFavourites,
         isFavourite,
+        rateMovie,
+        removeRating,
         selectedForRecommendations,
         setSelectedForRecommendations,
         recommendationsCache,

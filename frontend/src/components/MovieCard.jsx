@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useMovieContext } from "../contexts/MovieContext";
+import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
-import { Heart, Info, X, ExternalLink, Calendar, Film } from "lucide-react";
+import { Heart, Info, X, ExternalLink, Calendar, Film, Star } from "lucide-react";
 import "../css/MovieCard.css";
 
 function MovieCard({ movie }) {
-    const { isFavourite, addToFavourites, removeFromFavourites } = useMovieContext();
+    const { isFavourite, addToFavourites, removeFromFavourites, ratings, rateMovie } = useMovieContext();
+    const { user } = useAuth();
     const [showModal, setShowModal] = useState(false);
     const [imageError, setImageError] = useState(false);
     const [modalImageError, setModalImageError] = useState(false);
@@ -29,6 +31,17 @@ function MovieCard({ movie }) {
                 icon: "❤️"
             });
         }
+    }
+
+    const currentRating = ratings[movie.imdbID] || 0;
+
+    function onRateClick(score) {
+        if (!user) {
+            toast.info("Please log in to rate movies");
+            return;
+        }
+        rateMovie(movie, score);
+        toast.success(`Rated ${score} stars!`, { icon: "⭐" });
     }
 
     function onCardClick() {
@@ -156,6 +169,26 @@ function MovieCard({ movie }) {
                                             View on IMDb
                                         </a>
                                     )}
+                                </div>
+                                
+                                <div className="movie-rating-stars" style={{ display: 'flex', gap: '4px', alignItems: 'center', marginTop: '16px', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+                                    <span style={{ fontSize: '0.9em', opacity: 0.8, marginRight: '8px' }}>Your Rating:</span>
+                                    {[1, 2, 3, 4, 5].map(star => (
+                                        <button 
+                                            key={star}
+                                            onClick={() => onRateClick(star)}
+                                            style={{ 
+                                                background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
+                                                color: star <= currentRating ? '#fbbf24' : 'rgba(255,255,255,0.2)',
+                                                transition: 'transform 0.1s'
+                                            }}
+                                            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
+                                            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                            title={`Rate ${star} stars`}
+                                        >
+                                            <Star size={24} fill={star <= currentRating ? '#fbbf24' : 'none'} />
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                         </div>

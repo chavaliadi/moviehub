@@ -46,6 +46,9 @@ def create_app(config_class=Config):
 
     from app.api.favorites_routes import favorites_bp
     app.register_blueprint(favorites_bp, url_prefix='/api/favorites')
+    
+    from app.api.ratings_routes import ratings_bp
+    app.register_blueprint(ratings_bp, url_prefix='/api/ratings')
 
     # Auto-create tables in development when using SQLite
     db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '') or ''
