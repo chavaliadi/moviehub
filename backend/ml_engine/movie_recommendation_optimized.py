@@ -215,13 +215,14 @@ class MovieRecommendationSystem:
             print(f"❌ Error training model: {e}")
             return False
 
-    def get_recommendations(self, movie_name, num_recommendations=10):
+    def get_recommendations(self, movie_name, num_recommendations=10, genre=None):
         """
         Get movie recommendations
         
         Args:
                 movie_name: Name of the movie
                 num_recommendations: Number of recommendations to return
+                genre: Optional genre filter (TMDB canonical string)
 
         Returns:
                 List of recommended movie titles
@@ -331,6 +332,9 @@ class MovieRecommendationSystem:
                     candidate_genres = set(g.strip() for g in cand_genres_str.split(',') if g.strip())
                 else:
                     candidate_genres = set(g.strip() for g in cand_genres_str.split() if g.strip())
+                
+                if genre and genre not in candidate_genres:
+                    continue
                 
                 genre_overlap = len(source_genres.intersection(candidate_genres))
 

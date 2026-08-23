@@ -122,13 +122,14 @@ class RecommendationService:
 
     # Removed user-based recommendations stub to keep service minimal
 
-    def get_similar_movies(self, movie_id: str, limit: int = 10) -> Dict:
+    def get_similar_movies(self, movie_id: str, limit: int = 10, genre: str = None) -> Dict:
         """
         Get movies similar to a given movie
 
         Args:
             movie_id (str): Movie identifier or title
             limit (int): Number of similar movies to return
+            genre (str): Optional genre filter
 
         Returns:
             Dict: List of similar movies
@@ -147,7 +148,7 @@ class RecommendationService:
 
         try:
             # Simple in-memory cache to speed up repeated requests
-            cache_key = f"{movie_id}:{limit}"
+            cache_key = f"{movie_id}:{limit}:{genre}"
             now = time.time()
             cached = self._similar_cache.get(cache_key)
             if cached and now - cached['ts'] < self._cache_ttl_seconds:
@@ -165,7 +166,7 @@ class RecommendationService:
 
             # Get recommendations using our ML system
             recommendations = self.recommendation_system.get_recommendations(
-                movie_title, limit)
+                movie_title, limit, genre)
 
             if not recommendations:
                 return {

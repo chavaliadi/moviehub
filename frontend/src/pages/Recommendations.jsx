@@ -10,6 +10,8 @@ function Recommendations() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [mlStatus, setMlStatus] = useState(null);
+    const [selectedGenre, setSelectedGenre] = useState("all");
+    const AVAILABLE_GENRES = ["all", "Action", "Comedy", "Drama", "Sci-Fi", "Horror", "Thriller", "Romance", "Adventure"];
     const {
         favourites,
         recommendationsCache,
@@ -52,13 +54,15 @@ function Recommendations() {
     };
 
     const fetchRecommendations = async (forceRefresh = false) => {
+        const currentCache = recommendationsCache[selectedGenre] || [];
+        
         if (!favourites.length) {
-            setRecommendationsCache([]);
+            setRecommendationsCache(prev => ({ ...prev, [selectedGenre]: [] }));
             return;
         }
 
         // Don't refetch if we have data and not forcing refresh
-        if (!forceRefresh && recommendationsCache.length > 0) {
+        if (!forceRefresh && currentCache.length > 0) {
             return;
         }
 
@@ -72,7 +76,7 @@ function Recommendations() {
                 .filter(Boolean);
 
             if (favoriteTitles.length === 0) {
-                setRecommendationsCache([]);
+                setRecommendationsCache(prev => ({ ...prev, [selectedGenre]: [] }));
                 setLoading(false);
                 return;
             }
@@ -80,7 +84,7 @@ function Recommendations() {
             // Parallel fetch with timeout
             const recommendationPromises = favoriteTitles.map(title =>
                 Promise.race([
-                    getSimilarByTitle(title, 6).catch(err => {
+                    getSimilarByTitle(title, 6, selectedGenre).catch(err => {
                         // console.warn(`Recommendation error for ${title}:`, err);
                         return { success: false, similar_movies: [] };
                     }),
@@ -115,7 +119,7 @@ function Recommendations() {
             const limitedRecs = allRecs.slice(0, 30);
 
             if (limitedRecs.length === 0) {
-                setRecommendationsCache([]);
+                setRecommendationsCache(prev => ({ ...prev, [selectedGenre]: [] }));
                 setLoading(false);
                 return;
             }
@@ -140,11 +144,11 @@ function Recommendations() {
 
                 // Show progress by updating cache incrementally
                 if (allDetails.length > 0) {
-                    setRecommendationsCache([...allDetails]);
+                    setRecommendationsCache(prev => ({ ...prev, [selectedGenre]: [...allDetails] }));
                 }
             }
 
-            setRecommendationsCache(allDetails);
+            setRecommendationsCache(prev => ({ ...prev, [selectedGenre]: allDetails }));
         } catch (e) {
             // console.error("Recommendations error:", e);
             setError("Unable to generate recommendations at the moment.");
@@ -155,17 +159,19 @@ function Recommendations() {
 
     // Auto-fetch only if cache is empty and there are favorites
     useEffect(() => {
-        if (favourites.length > 0 && recommendationsCache.length === 0) {
+        const currentCache = recommendationsCache[selectedGenre] || [];
+        if (favourites.length > 0 && currentCache.length === 0) {
             // Only fetch if we have favorites but no cached recommendations
             fetchRecommendations(false);
         } else if (favourites.length === 0) {
             // Clear cache if no favorites
-            setRecommendationsCache([]);
+            setRecommendationsCache(prev => ({ ...prev, [selectedGenre]: [] }));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [favourites.length]);
+    }, [favourites.length, selectedGenre]);
 
-    const moviesByGenre = groupMoviesByGenre(recommendationsCache);
+    const currentCache = recommendationsCache[selectedGenre] || [];
+    const moviesByGenre = groupMoviesByGenre(currentCache);
 
     return (
         <div className="recommendations container">
@@ -176,7 +182,7 @@ function Recommendations() {
                 <p className="page-subtitle">
                     Personalized picks based on your collection.
                 </p>
-                {favourites.length > 0 && recommendationsCache.length > 0 && (
+                {favourites.length > 0 && currentCache.length > 0 && (
                     <p className="page-subtitle" style={{ fontSize: '0.85em', opacity: 0.7, marginTop: '0.5rem' }}>
                         💡 Updated your favorites? Click "Refresh Picks" to get new recommendations.
                     </p>
@@ -220,15 +226,30 @@ function Recommendations() {
                 </div>
             ) : error ? (
                 <div className="error-message glass-panel">{error}</div>
-            ) : recommendationsCache.length === 0 ? (
-                <div className="empty-state glass-panel">
-                    <Search size={48} className="empty-icon" />
-                    <h2>No recommendations found</h2>
-                    <p>Try adding more diverse movies to your favorites.</p>
-                </div>
             ) : (
                 <>
-                    <div className="recommendations-actions">
+                    <div className="recommendations-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
+                        <div className="genre-filters" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            {AVAILABLE_GENRES.map(g => (
+                                <button 
+                                    key={g} 
+                                    className={`genre-pill ${selectedGenre === g ? 'active' : ''}`}
+                                    onClick={() => setSelectedGenre(g)}
+                                    style={{
+                                        padding: '0.5rem 1rem',
+                                        borderRadius: '20px',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        background: selectedGenre === g ? '#8b5cf6' : 'rgba(255,255,255,0.05)',
+                                        color: 'white',
+                                        cursor: 'pointer',
+                                        textTransform: 'capitalize',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {g}
+                                </button>
+                            ))}
+                        </div>
                         <button
                             className="refresh-btn glass-panel"
                             onClick={() => fetchRecommendations(true)}
@@ -238,16 +259,24 @@ function Recommendations() {
                             Refresh Picks
                         </button>
                     </div>
-                    {Object.entries(moviesByGenre).map(([genre, genreMovies]) => (
-                        <div key={genre} className="genre-section">
-                            <h2 className="genre-title">{genre}</h2>
-                            <div className="movies-grid">
-                                {genreMovies.map((movie) => (
-                                    <MovieCard key={movie.imdbID} movie={movie} />
-                                ))}
-                            </div>
+                    {currentCache.length === 0 ? (
+                        <div className="empty-state glass-panel">
+                            <Search size={48} className="empty-icon" />
+                            <h2>No recommendations found</h2>
+                            <p>Try adding more diverse movies to your favorites or try a different genre.</p>
                         </div>
-                    ))}
+                    ) : (
+                        Object.entries(moviesByGenre).map(([genre, genreMovies]) => (
+                            <div key={genre} className="genre-section">
+                                <h2 className="genre-title">{genre}</h2>
+                                <div className="movies-grid">
+                                    {genreMovies.map((movie) => (
+                                        <MovieCard key={movie.imdbID} movie={movie} />
+                                    ))}
+                                </div>
+                            </div>
+                        ))
+                    )}
                 </>
             )}
         </div>

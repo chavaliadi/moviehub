@@ -9,7 +9,7 @@ export const useMovieContext = () => useContext(MovieContext);
 export const MovieProvider = ({ children }) => {
     const [favourites, setFavourites] = useState([]);
     const [selectedForRecommendations, setSelectedForRecommendations] = useState([]);
-    const [recommendationsCache, setRecommendationsCache] = useState([]);
+    const [recommendationsCache, setRecommendationsCache] = useState({});
     const [showRecommendationPopup, setShowRecommendationPopup] = useState(false);
 
     const { user } = useAuth();
@@ -48,7 +48,19 @@ export const MovieProvider = ({ children }) => {
         const storedRecommendations = localStorage.getItem("recommendationsCache");
 
         if (storedSelected) setSelectedForRecommendations(JSON.parse(storedSelected));
-        if (storedRecommendations) setRecommendationsCache(JSON.parse(storedRecommendations));
+        if (storedRecommendations) {
+            try {
+                const parsed = JSON.parse(storedRecommendations);
+                if (Array.isArray(parsed)) {
+                    // Migrate old array cache to new dict format
+                    setRecommendationsCache({ "all": parsed });
+                } else {
+                    setRecommendationsCache(parsed);
+                }
+            } catch (e) {
+                setRecommendationsCache({});
+            }
+        }
     }, []);
 
     useEffect(() => {

@@ -5,7 +5,10 @@ Tests the ML recommendation system with your Flask backend
 
 import sys
 import os
-sys.path.append('/Users/srinivasch/Desktop/React Movie Tut/backend')
+
+# Add the backend directory to the Python path
+backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(backend_dir)
 
 from app.services.recommendation_service import RecommendationService
 
@@ -17,6 +20,7 @@ def test_backend_integration():
         # Initialize the service
         print("🚀 Initializing RecommendationService...")
         service = RecommendationService()
+        service._initialize_system()
         
         # Check system status
         print("\n📊 System Status:")
@@ -41,6 +45,34 @@ def test_backend_integration():
                         print(f"   {i}. {rec['title']} (score: {rec['similarity_score']:.3f})")
                 else:
                     print(f"❌ Error: {result.get('error', 'Unknown error')}")
+            
+            # Test Genre Filtering
+            print("\n🎭 Testing Genre Filtering & Cache Isolation:")
+            movie_to_test = "The Dark Knight"
+            
+            # 1. Test Action
+            print(f"\n📝 Testing: {movie_to_test} with genre: Action")
+            action_result = service.get_similar_movies(movie_to_test, limit=3, genre="Action")
+            if action_result['success']:
+                print(f"✅ Found {action_result['total_found']} Action recommendations")
+                for i, rec in enumerate(action_result['similar_movies'][:3], 1):
+                    print(f"   {i}. {rec['title']}")
+            
+            # 2. Test Comedy (Cache Isolation)
+            print(f"\n📝 Testing: {movie_to_test} with genre: Comedy")
+            comedy_result = service.get_similar_movies(movie_to_test, limit=3, genre="Comedy")
+            if comedy_result['success']:
+                print(f"✅ Found {comedy_result['total_found']} Comedy recommendations")
+                for i, rec in enumerate(comedy_result['similar_movies'][:3], 1):
+                    print(f"   {i}. {rec['title']}")
+                    
+            # 3. Test API Normalization (Mocked for service test)
+            print(f"\n📝 Testing: {movie_to_test} with normalized genre: Science Fiction")
+            scifi_result = service.get_similar_movies(movie_to_test, limit=3, genre="Science Fiction")
+            if scifi_result['success']:
+                print(f"✅ Found {scifi_result['total_found']} Sci-Fi recommendations")
+                for i, rec in enumerate(scifi_result['similar_movies'][:3], 1):
+                    print(f"   {i}. {rec['title']}")
             
             # Test search functionality
             print(f"\n🔍 Testing Search: 'Batman'")
@@ -69,10 +101,10 @@ def test_api_endpoints():
     print("\n🌐 Testing API Endpoints")
     print("Note: This requires your Flask backend to be running")
     print("Start your backend with: python backend/run.py")
-    print("\nAvailable endpoints:")
+    print("Available endpoints:")
     print("• GET /api/ml/status - Check system status")
-    print("• GET /api/ml/recommendations/similar?movie_id=Avatar&limit=5")
-    print("• GET /api/ml/recommendations/movie/Avatar?limit=5")
+    print("• GET /api/ml/recommendations/similar?movie_id=Avatar&limit=5&genre=Action")
+    print("• GET /api/ml/recommendations/movie/Avatar?limit=5&genre=Sci-Fi")
     print("• GET /api/ml/search?q=Batman&limit=10")
     print("• POST /api/ml/train - Retrain the model")
 

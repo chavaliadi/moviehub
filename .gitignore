@@ -24,3 +24,6 @@ frontend/*.log
 # IDEs
 .vscode/
 .idea/
+
+# AI Agent
+ai-agent-skills/

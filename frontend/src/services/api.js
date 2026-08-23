@@ -41,8 +41,11 @@ export const getUserRecommendations = async (userId, limit = 10) => {
     return res.json();
 };
 
-export const getSimilarByTitle = async (title, limit = 10) => {
-    const url = `${BACKEND_URL}/api/ml/recommendations/similar?title=${encodeURIComponent(title)}&limit=${limit}`;
+export const getSimilarByTitle = async (title, limit = 10, genre = null) => {
+    let url = `${BACKEND_URL}/api/ml/recommendations/similar?title=${encodeURIComponent(title)}&limit=${limit}`;
+    if (genre && genre !== "all") {
+        url += `&genre=${encodeURIComponent(genre)}`;
+    }
     try {
         const res = await fetch(url);
         // Try to parse JSON even on non-200 responses

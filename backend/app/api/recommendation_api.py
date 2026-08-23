@@ -1,6 +1,14 @@
 from flask_restful import Resource, Api
 from app.services.recommendation_service import RecommendationService
 
+GENRE_MAP = {
+    "Sci-Fi": "Science Fiction"
+}
+
+def _normalize_genre(genre):
+    if not genre:
+        return None
+    return GENRE_MAP.get(genre, genre)
 
 class SimilarMoviesResource(Resource):
     """Resource for getting similar movies"""
@@ -14,12 +22,13 @@ class SimilarMoviesResource(Resource):
 
         movie_id = request.args.get('movie_id') or request.args.get('title')
         limit = request.args.get('limit', 10, type=int)
+        genre = _normalize_genre(request.args.get('genre'))
 
         if not movie_id:
             return {'error': 'movie_id or title parameter is required'}, 400
 
         result = self.recommendation_service.get_similar_movies(
-            movie_id, limit=limit)
+            movie_id, limit=limit, genre=genre)
         return result, 200 if result['success'] else 400
 
 
@@ -34,9 +43,10 @@ class MovieRecommendationsResource(Resource):
         from flask import request
 
         limit = request.args.get('limit', 10, type=int)
+        genre = _normalize_genre(request.args.get('genre'))
 
         result = self.recommendation_service.get_similar_movies(
-            movie_title, limit=limit)
+            movie_title, limit=limit, genre=genre)
         return result, 200 if result['success'] else 400
 
 
