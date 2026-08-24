@@ -2,11 +2,11 @@ import { useState } from "react";
 import { useMovieContext } from "../contexts/MovieContext";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
-import { Heart, Info, X, ExternalLink, Calendar, Film, Star } from "lucide-react";
+import { Heart, Info, X, ExternalLink, Calendar, Film, Star, Bookmark } from "lucide-react";
 import "../css/MovieCard.css";
 
 function MovieCard({ movie }) {
-    const { isFavourite, addToFavourites, removeFromFavourites, ratings, rateMovie } = useMovieContext();
+    const { isFavourite, addToFavourites, removeFromFavourites, ratings, rateMovie, isInWatchlist, addToWatchlist, removeFromWatchlist } = useMovieContext();
     const { user } = useAuth();
     const [showModal, setShowModal] = useState(false);
     const [imageError, setImageError] = useState(false);
@@ -30,6 +30,28 @@ function MovieCard({ movie }) {
             toast.success(`Added to favorites!`, {
                 icon: "❤️"
             });
+        }
+    }
+
+    const inWatchlist = isInWatchlist(movie.imdbID);
+
+    async function onWatchlistClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!user) {
+            toast.info("Please log in to manage your watchlist");
+            return;
+        }
+        if (inWatchlist) {
+            const success = await removeFromWatchlist(movie.imdbID);
+            if (success) {
+                toast.info(`Removed from watchlist`, { icon: "🔖" });
+            }
+        } else {
+            const success = await addToWatchlist(movie);
+            if (success) {
+                toast.success(`Added to watchlist!`, { icon: "🔖" });
+            }
         }
     }
 
@@ -156,6 +178,14 @@ function MovieCard({ movie }) {
                                     >
                                         <Heart size={18} fill={favourites ? "currentColor" : "none"} />
                                         {favourites ? "Remove from Favorites" : "Add to Favorites"}
+                                    </button>
+
+                                    <button
+                                        className={`btn-primary ${inWatchlist ? "btn-danger" : ""}`}
+                                        onClick={onWatchlistClick}
+                                    >
+                                        <Bookmark size={18} fill={inWatchlist ? "currentColor" : "none"} />
+                                        {inWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
                                     </button>
 
                                     {movie.imdbID && (

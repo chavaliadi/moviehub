@@ -8,7 +8,7 @@ Usage:
 from flask import Flask
 from app.db import init_db, create_tables
 from app import create_app
-from app.models import User, Favorite, Rating
+from app.models import User, Favorite, Rating, Watchlist
 import os
 from dotenv import load_dotenv
 
@@ -29,7 +29,7 @@ def main():
     from app.db import db
     
     print(f"📦 Connected to database: {app.config.get('SQLALCHEMY_DATABASE_URI')}")
-    print(f"📋 Creating tables for models: User, Favorite, Rating")
+    print(f"📋 Creating tables for models: User, Favorite, Rating, Watchlist")
     
     # Create all tables
     create_tables(app)

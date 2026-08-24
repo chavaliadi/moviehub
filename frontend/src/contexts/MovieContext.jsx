@@ -8,6 +8,7 @@ export const useMovieContext = () => useContext(MovieContext);
 
 export const MovieProvider = ({ children }) => {
     const [favourites, setFavourites] = useState([]);
+    const [watchlist, setWatchlist] = useState([]);
     const [ratings, setRatings] = useState({});
     const [selectedForRecommendations, setSelectedForRecommendations] = useState([]);
     const [recommendationsCache, setRecommendationsCache] = useState({});
@@ -23,6 +24,9 @@ export const MovieProvider = ({ children }) => {
                 try {
                     const favResponse = await axios.get('/api/favorites/');
                     setFavourites(favResponse.data);
+                    
+                    const watchlistResponse = await axios.get('/api/watchlist/');
+                    setWatchlist(watchlistResponse.data);
                     
                     const ratResponse = await axios.get('/api/ratings/');
                     const ratingsDict = {};
@@ -40,6 +44,7 @@ export const MovieProvider = ({ children }) => {
             const storedFavs = localStorage.getItem("favorites");
             if (storedFavs) setFavourites(JSON.parse(storedFavs));
             else setFavourites([]);
+            setWatchlist([]); // Clear watchlist when logged out (no localStorage)
             setRatings({}); // Clear ratings when logged out
         }
     }, [user]);
@@ -139,6 +144,55 @@ export const MovieProvider = ({ children }) => {
         return favourites.some(movie => (movie.imdb_id || movie.imdbID) === movieId);
     };
 
+    const addToWatchlist = async (movie) => {
+        if (!user) return false;
+        
+        const movieData = {
+            imdbID: movie.imdbID || movie.imdb_id,
+            Title: movie.Title || movie.movie_title,
+            Poster: movie.Poster || movie.movie_poster,
+            Year: movie.Year || movie.movie_year,
+            Type: movie.Type || movie.movie_type || 'movie'
+        };
+
+        try {
+            const response = await axios.post('/api/watchlist/', {
+                imdb_id: movieData.imdbID,
+                title: movieData.Title,
+                poster_path: movieData.Poster,
+                release_date: movieData.Year,
+                media_type: movieData.Type
+            });
+
+            if (response.status === 201 || response.status === 200) {
+                setWatchlist(prev => {
+                    if (prev.some(m => (m.imdb_id || m.imdbID) === movieData.imdbID)) return prev;
+                    return [...prev, response.data || movieData];
+                });
+                return true;
+            }
+        } catch (error) {
+            return false;
+        }
+        return false;
+    };
+
+    const removeFromWatchlist = async (movieId) => {
+        if (!user) return false;
+        
+        try {
+            await axios.delete(`/api/watchlist/${movieId}`);
+            setWatchlist(prev => prev.filter(movie => (movie.imdb_id || movie.imdbID) !== movieId));
+            return true;
+        } catch (error) {
+            return false;
+        }
+    };
+
+    const isInWatchlist = (movieId) => {
+        return watchlist.some(movie => (movie.imdb_id || movie.imdbID) === movieId);
+    };
+
     const rateMovie = async (movie, score) => {
         if (!user) return false;
         
@@ -188,6 +242,10 @@ export const MovieProvider = ({ children }) => {
         addToFavourites,
         removeFromFavourites,
         isFavourite,
+        watchlist,
+        addToWatchlist,
+        removeFromWatchlist,
+        isInWatchlist,
         rateMovie,
         removeRating,
         selectedForRecommendations,

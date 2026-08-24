@@ -25,6 +25,9 @@ class User(UserMixin, db.Model):
     # Relationship with favorites
     favorites = db.relationship('Favorite', back_populates='user', cascade='all, delete-orphan', lazy='dynamic')
     
+    # Relationship with watchlists
+    watchlists = db.relationship('Watchlist', back_populates='user', cascade='all, delete-orphan', lazy='dynamic')
+    
     def set_password(self, password):
         """Hash and set user password."""
         self.password_hash = generate_password_hash(password)

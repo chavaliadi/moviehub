@@ -47,6 +47,9 @@ def create_app(config_class=Config):
     from app.api.favorites_routes import favorites_bp
     app.register_blueprint(favorites_bp, url_prefix='/api/favorites')
     
+    from app.api.watchlist_routes import watchlist_bp
+    app.register_blueprint(watchlist_bp, url_prefix='/api/watchlist')
+    
     from app.api.ratings_routes import ratings_bp
     app.register_blueprint(ratings_bp, url_prefix='/api/ratings')
 
